@@ -31,13 +31,23 @@ feature_weights = {
     'essays_concatenated': 0
 }
 
+# def get_user_profiles(indices):
+    # conn = sqlite3.connect('users.db')
+    # placeholders = ', '.join(['?' for _ in indices])  # Create placeholders for SQL query
+    # query = f"SELECT username, age, body_type,diet,drinks,drugs,education,ethnicity,religion,job, ROWID FROM users WHERE ROWID IN ({placeholders})"
+    # df_top_profiles = pd.read_sql_query(query, conn, params=indices)
+    # conn.close()
+    # return df_top_profiles
+
 def get_user_profiles(indices):
     conn = sqlite3.connect('users.db')
-    placeholders = ', '.join(['?' for _ in indices])  # Create placeholders for SQL query
-    query = f"SELECT username, age, body_type,diet,drinks,drugs,education,ethnicity,religion,job, ROWID FROM users WHERE ROWID IN ({placeholders})"
-    df_top_profiles = pd.read_sql_query(query, conn, params=indices)
+    target_columns = [col for col in conn.execute("PRAGMA table_info(users)").fetchall() if col[1].startswith('target')]
+    target_column_names = [col[1] for col in target_columns]
+    placeholders = ', '.join(['?' for _ in indices])
+    query = f"SELECT {', '.join(target_column_names)}, ROWID FROM users WHERE ROWID IN ({placeholders})"
+    df_target_profiles = pd.read_sql_query(query, conn, params=indices)
     conn.close()
-    return df_top_profiles
+    return df_target_profiles
 
 # Function to calculate, scale BM25 scores, and return scores with indices
 def calculate_scaled_bm25_scores_with_indices(bm25_obj, corpus, min_val=0, max_val=5):
